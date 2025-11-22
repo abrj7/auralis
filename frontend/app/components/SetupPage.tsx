@@ -9,6 +9,8 @@ interface SetupPageProps {
   selectedBg: string;
   setSelectedBg: (bg: string) => void;
   onBack: () => void;
+  selectedAvatar: string;
+  setSelectedAvatar: (id: string) => void;
 }
 
 const AVATAR_OPTIONS = [
@@ -28,8 +30,7 @@ const BG_OPTIONS = [
   { id: "bg3", color: "from-emerald-50 to-teal-50" },
 ];
 
-export default function SetupPage({ onConnect, selectedBg, setSelectedBg, onBack }: SetupPageProps) {
-  const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_OPTIONS[0].id);
+export default function SetupPage({ onConnect, selectedBg, setSelectedBg, onBack, selectedAvatar, setSelectedAvatar }: SetupPageProps) {
   const [selectedVoice, setSelectedVoice] = useState(VOICE_OPTIONS[0].id);
 
   return (
