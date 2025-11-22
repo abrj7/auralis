@@ -108,20 +108,37 @@ export default function AudioController({
 
   const handleChatResponse = async (userMessage: string) => {
     try {
-      // Mock response - replace with real /api/chat when Person 3 is ready
-      const mockResponse = {
-        response: "I understand. Can you tell me more about your symptoms?",
-        followup_needed: true,
-      };
+      // Call real Gemini chat API
+      const response = await fetch("http://localhost:8000/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          emotion: "neutral", // TODO: Replace with real emotion from Person 2's face detection
+        }),
+      });
 
-      // Notify parent component of assistant response
-      onAssistantResponse?.(mockResponse.response);
+      if (!response.ok) {
+        throw new Error("Chat API request failed");
+      }
 
-      // Send to TTS
-      await speakText(mockResponse.response);
+      const data = await response.json();
+
+      if (data.response) {
+        // Notify parent component of assistant response
+        onAssistantResponse?.(data.response);
+
+        // Send to TTS
+        await speakText(data.response);
+      }
     } catch (err) {
       console.error("Chat error:", err);
       setError("Failed to get response");
+      if (continuousMode && shouldContinueListeningRef.current) {
+        startListening(); // Restart listening even on error
+      }
     }
   };
 
