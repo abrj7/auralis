@@ -11,11 +11,13 @@ import { AudioRecorder, playAudio } from "@/lib/audioUtils";
 interface AudioControllerProps {
   onTranscript?: (text: string) => void;
   onSpeakingStateChange?: (isSpeaking: boolean) => void;
+  onAssistantResponse?: (text: string) => void;
 }
 
 export default function AudioController({
   onTranscript,
   onSpeakingStateChange,
+  onAssistantResponse,
 }: AudioControllerProps) {
   const [isListening, setIsListening] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -90,6 +92,9 @@ export default function AudioController({
         response: "I understand. Can you tell me more about your symptoms?",
         followup_needed: true,
       };
+
+      // Notify parent component of assistant response
+      onAssistantResponse?.(mockResponse.response);
 
       // Send to TTS
       await speakText(mockResponse.response);
