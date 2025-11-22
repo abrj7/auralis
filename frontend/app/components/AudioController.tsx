@@ -12,12 +12,16 @@ interface AudioControllerProps {
   onTranscript?: (text: string) => void;
   onSpeakingStateChange?: (isSpeaking: boolean) => void;
   onAssistantResponse?: (text: string) => void;
+  autoStart?: boolean; // Auto-start listening when component mounts
+  continuousMode?: boolean; // Automatically restart listening after AI speaks
 }
 
 export default function AudioController({
   onTranscript,
   onSpeakingStateChange,
   onAssistantResponse,
+  autoStart = false,
+  continuousMode = false,
 }: AudioControllerProps) {
   const [isListening, setIsListening] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -28,6 +32,8 @@ export default function AudioController({
 
   const recorderRef = useRef<AudioRecorder | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const shouldContinueListeningRef = useRef<boolean>(false);
 
   useEffect(() => {
     // Initialize audio recorder
@@ -38,12 +44,27 @@ export default function AudioController({
 
     return () => {
       // Cleanup
+      shouldContinueListeningRef.current = false;
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+      }
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
+      if (recorderRef.current && recorderRef.current.isRecording()) {
+        recorderRef.current.stopRecording().catch(() => {});
+      }
     };
   }, []);
+
+  // Auto-start listening when permission is granted (for continuous mode)
+  useEffect(() => {
+    if (autoStart && hasPermission && !isListening && !isPlaying) {
+      shouldContinueListeningRef.current = true;
+      startListening();
+    }
+  }, [autoStart, hasPermission, isListening, isPlaying]);
 
   const checkMicrophonePermission = async () => {
     try {
@@ -138,11 +159,25 @@ export default function AudioController({
             setIsPlaying(false);
             onSpeakingStateChange?.(false);
             window.dispatchEvent(new CustomEvent("audioPlaybackEnd"));
+
+            // Auto-restart listening in continuous mode
+            if (continuousMode && shouldContinueListeningRef.current) {
+              setTimeout(() => {
+                startListening();
+              }, 500); // Small delay before restarting
+            }
           },
           (error) => {
             setError(error);
             setIsPlaying(false);
             onSpeakingStateChange?.(false);
+
+            // Still restart listening even on error
+            if (continuousMode && shouldContinueListeningRef.current) {
+              setTimeout(() => {
+                startListening();
+              }, 500);
+            }
           }
         );
       }
@@ -163,11 +198,32 @@ export default function AudioController({
       if (recorderRef.current) {
         await recorderRef.current.startRecording();
         setIsListening(true);
+
+        // In continuous mode, auto-stop after silence (3 seconds)
+        if (continuousMode) {
+          startSilenceDetection();
+        }
       }
     } catch (err) {
       console.error("Recording start error:", err);
       setError("Failed to start recording");
     }
+  };
+
+  const startSilenceDetection = () => {
+    // Clear any existing timer
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+    }
+
+    // Auto-stop recording after 3 seconds of "silence"
+    // In a real implementation, you'd use Web Audio API to detect actual silence
+    // For now, we'll use a simple timer approach
+    silenceTimerRef.current = setTimeout(() => {
+      if (recorderRef.current && recorderRef.current.isRecording()) {
+        stopListening();
+      }
+    }, 3000); // 3 seconds
   };
 
   const stopListening = async () => {
@@ -185,75 +241,120 @@ export default function AudioController({
   };
 
   return (
-    <div className="flex flex-col items-center space-y-4 p-6">
-      {/* Microphone button */}
-      <button
-        onClick={isListening ? stopListening : startListening}
-        disabled={isPlaying || !hasPermission}
-        className={`p-6 rounded-full transition-all shadow-lg ${
-          isListening
-            ? "bg-red-500 hover:bg-red-600 animate-pulse"
-            : isPlaying
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-blue-600 hover:bg-blue-700"
-        }`}
-        aria-label={isListening ? "Stop listening" : "Start listening"}
-      >
-        <svg
-          className="w-8 h-8 text-white"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-          />
-        </svg>
-      </button>
+    <div className="flex flex-col items-center space-y-4">
+      {/* Visual indicator only (no button in continuous mode) */}
+      {continuousMode ? (
+        <div className="flex flex-col items-center space-y-3">
+          {/* Status indicator */}
+          <div
+            className={`p-4 rounded-full transition-all ${
+              isListening
+                ? "bg-red-500/20 animate-pulse"
+                : isPlaying
+                ? "bg-blue-500/20"
+                : "bg-gray-500/20"
+            }`}
+          >
+            <svg
+              className={`w-6 h-6 ${
+                isListening
+                  ? "text-red-600"
+                  : isPlaying
+                  ? "text-blue-600"
+                  : "text-gray-600"
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+              />
+            </svg>
+          </div>
 
-      {/* Status text */}
-      <div className="text-center min-h-[24px]">
-        {!hasPermission && (
-          <p className="text-sm text-red-600">Microphone permission needed</p>
-        )}
-        {hasPermission && isListening && (
-          <p className="text-sm text-red-600 font-medium">🎤 Listening...</p>
-        )}
-        {hasPermission && isPlaying && (
-          <p className="text-sm text-blue-600 font-medium">
-            🔊 Doctor is speaking...
-          </p>
-        )}
-        {hasPermission && !isListening && !isPlaying && (
-          <p className="text-sm text-gray-500">Click to speak</p>
-        )}
-      </div>
+          {/* Status text */}
+          <div className="text-center">
+            {!hasPermission && (
+              <p className="text-xs text-red-600 font-medium">
+                Requesting microphone access...
+              </p>
+            )}
+            {hasPermission && isListening && (
+              <p className="text-xs text-red-600 font-medium">Listening...</p>
+            )}
+            {hasPermission && isPlaying && (
+              <p className="text-xs text-blue-600 font-medium">
+                Doctor is speaking...
+              </p>
+            )}
+            {hasPermission && !isListening && !isPlaying && (
+              <p className="text-xs text-gray-500">Ready</p>
+            )}
+          </div>
+        </div>
+      ) : (
+        // Original button mode (for non-continuous use)
+        <>
+          <button
+            onClick={isListening ? stopListening : startListening}
+            disabled={isPlaying || !hasPermission}
+            className={`p-6 rounded-full transition-all shadow-lg ${
+              isListening
+                ? "bg-red-500 hover:bg-red-600 animate-pulse"
+                : isPlaying
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
+            aria-label={isListening ? "Stop listening" : "Start listening"}
+          >
+            <svg
+              className="w-8 h-8 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+              />
+            </svg>
+          </button>
+
+          <div className="text-center min-h-[24px]">
+            {!hasPermission && (
+              <p className="text-sm text-red-600">
+                Microphone permission needed
+              </p>
+            )}
+            {hasPermission && isListening && (
+              <p className="text-sm text-red-600 font-medium">
+                🎤 Listening...
+              </p>
+            )}
+            {hasPermission && isPlaying && (
+              <p className="text-sm text-blue-600 font-medium">
+                🔊 Doctor is speaking...
+              </p>
+            )}
+            {hasPermission && !isListening && !isPlaying && (
+              <p className="text-sm text-gray-500">Click to speak</p>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Error message */}
       {error && (
-        <div className="max-w-md p-3 bg-red-100 border border-red-300 rounded-lg">
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="max-w-md p-3 bg-red-100/80 backdrop-blur-sm border border-red-300 rounded-lg">
+          <p className="text-xs text-red-700">{error}</p>
         </div>
       )}
-
-      {/* Live transcript */}
-      {transcript && (
-        <div className="max-w-md p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-xs text-gray-500 mb-1">You said:</p>
-          <p className="text-sm text-gray-800">{transcript}</p>
-        </div>
-      )}
-
-      {/* Mute toggle (for future use) */}
-      <button
-        onClick={() => setIsMuted(!isMuted)}
-        className="text-sm text-gray-600 hover:text-gray-800"
-      >
-        {isMuted ? "🔇 Unmute" : "🔊 Mute"}
-      </button>
     </div>
   );
 }

@@ -36,6 +36,7 @@ export default function CallInterface({
   ]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [hasSpokenGreeting, setHasSpokenGreeting] = useState(false);
+  const [shouldStartListening, setShouldStartListening] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -83,6 +84,8 @@ export default function CallInterface({
         audio.onended = () => {
           setIsSpeaking(false);
           window.dispatchEvent(new CustomEvent("audioPlaybackEnd"));
+          // Enable listening after greeting finishes
+          setShouldStartListening(true);
         };
 
         audio.onerror = () => {
@@ -221,6 +224,8 @@ export default function CallInterface({
             onTranscript={handleTranscript}
             onSpeakingStateChange={handleSpeakingStateChange}
             onAssistantResponse={handleAssistantResponse}
+            autoStart={shouldStartListening}
+            continuousMode={true}
           />
         </div>
       </div>
