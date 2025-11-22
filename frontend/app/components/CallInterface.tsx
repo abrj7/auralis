@@ -35,6 +35,7 @@ export default function CallInterface({
     },
   ]);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [hasSpokenGreeting, setHasSpokenGreeting] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -42,6 +43,59 @@ export default function CallInterface({
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Speak the initial greeting when component mounts
+  useEffect(() => {
+    if (!hasSpokenGreeting) {
+      speakInitialGreeting();
+      setHasSpokenGreeting(true);
+    }
+  }, [hasSpokenGreeting]);
+
+  const speakInitialGreeting = async () => {
+    const greeting = "Hello! I'm your AI Doctor. How are you feeling today?";
+
+    try {
+      const response = await fetch("http://localhost:8000/api/tts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: greeting }),
+      });
+
+      if (!response.ok) {
+        console.error("Failed to generate greeting TTS");
+        return;
+      }
+
+      const data = await response.json();
+
+      if (data.audio_base64) {
+        const audioUrl = `data:audio/mpeg;base64,${data.audio_base64}`;
+        const audio = new Audio(audioUrl);
+
+        audio.onplay = () => {
+          setIsSpeaking(true);
+          window.dispatchEvent(new CustomEvent("audioPlaybackStart"));
+        };
+
+        audio.onended = () => {
+          setIsSpeaking(false);
+          window.dispatchEvent(new CustomEvent("audioPlaybackEnd"));
+        };
+
+        audio.onerror = () => {
+          console.error("Failed to play greeting audio");
+          setIsSpeaking(false);
+        };
+
+        await audio.play();
+      }
+    } catch (err) {
+      console.error("Error speaking greeting:", err);
+    }
+  };
 
   const handleTranscript = (text: string) => {
     // Add user message to transcript
