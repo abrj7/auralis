@@ -6,6 +6,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { AudioRecorder, playAudio } from "@/lib/audioUtils";
 
 interface AudioControllerProps {
   onTranscript?: (text: string) => void;
@@ -18,96 +19,177 @@ export default function AudioController({
 }: AudioControllerProps) {
   const [isListening, setIsListening] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [hasPermission, setHasPermission] = useState(false);
   const [transcript, setTranscript] = useState("");
-  const recognitionRef = useRef<any>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const recorderRef = useRef<AudioRecorder | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // TODO: Initialize audio recorder
-    // recognitionRef.current = new AudioRecorder();
+    // Initialize audio recorder
+    recorderRef.current = new AudioRecorder();
+
+    // Check microphone permission
+    checkMicrophonePermission();
 
     return () => {
-      // TODO: Cleanup audio recorder
-      if (recognitionRef.current) {
-        // cleanup
+      // Cleanup
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
       }
     };
   }, []);
 
-  const handleRecordingComplete = async (audioBlob: Blob) => {
-    // TODO: Send audio to backend /api/stt
-    // TODO: Get transcribed text
-    // TODO: Call onTranscript callback
+  const checkMicrophonePermission = async () => {
     try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((track) => track.stop());
+      setHasPermission(true);
+    } catch (err) {
+      setHasPermission(false);
+      setError("Microphone permission denied");
+    }
+  };
+
+  const handleRecordingComplete = async (audioBlob: Blob) => {
+    try {
+      setError(null);
       const formData = new FormData();
-      formData.append("audio", audioBlob);
+      formData.append("audio", audioBlob, "recording.webm");
 
       const response = await fetch("http://localhost:8000/api/stt", {
         method: "POST",
         body: formData,
       });
 
+      if (!response.ok) {
+        throw new Error("STT request failed");
+      }
+
       const data = await response.json();
       if (data.text) {
         setTranscript(data.text);
         onTranscript?.(data.text);
+
+        // Mock chat response (replace with real API when Person 3 is ready)
+        await handleChatResponse(data.text);
       }
-    } catch (error) {
-      console.error("Transcription error:", error);
+    } catch (err) {
+      console.error("Transcription error:", err);
+      setError("Failed to transcribe audio");
+    }
+  };
+
+  const handleChatResponse = async (userMessage: string) => {
+    try {
+      // Mock response - replace with real /api/chat when Person 3 is ready
+      const mockResponse = {
+        response: "I understand. Can you tell me more about your symptoms?",
+        followup_needed: true,
+      };
+
+      // Send to TTS
+      await speakText(mockResponse.response);
+    } catch (err) {
+      console.error("Chat error:", err);
+      setError("Failed to get response");
+    }
+  };
+
+  const speakText = async (text: string) => {
+    try {
+      setError(null);
+      const response = await fetch("http://localhost:8000/api/tts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!response.ok) {
+        throw new Error("TTS request failed");
+      }
+
+      const data = await response.json();
+
+      if (data.audio_base64) {
+        // Convert base64 to playable URL
+        const audioUrl = `data:audio/mpeg;base64,${data.audio_base64}`;
+
+        // Emit event for avatar
+        window.dispatchEvent(new CustomEvent("audioPlaybackStart"));
+
+        await playAudio(
+          audioUrl,
+          () => {
+            setIsPlaying(true);
+            onSpeakingStateChange?.(true);
+          },
+          () => {
+            setIsPlaying(false);
+            onSpeakingStateChange?.(false);
+            window.dispatchEvent(new CustomEvent("audioPlaybackEnd"));
+          },
+          (error) => {
+            setError(error);
+            setIsPlaying(false);
+            onSpeakingStateChange?.(false);
+          }
+        );
+      }
+    } catch (err) {
+      console.error("TTS error:", err);
+      setError("Failed to generate speech");
     }
   };
 
   const startListening = async () => {
-    // TODO: Start audio recording
-    // if (recognitionRef.current) {
-    //   await recognitionRef.current.startRecording();
-    //   setIsListening(true);
-    // }
-    setIsListening(true);
-  };
+    if (!hasPermission) {
+      await checkMicrophonePermission();
+      return;
+    }
 
-  const stopListening = async () => {
-    // TODO: Stop recording and process audio
-    // if (recognitionRef.current) {
-    //   const audioBlob = await recognitionRef.current.stopRecording();
-    //   await handleRecordingComplete(audioBlob);
-    //   setIsListening(false);
-    // }
-    setIsListening(false);
-  };
-
-  const playAudio = async (audioUrl: string) => {
-    // TODO: Play audio from URL
-    // TODO: Update isPlaying state
-    // TODO: Call onSpeakingStateChange callback
     try {
-      if (audioRef.current) {
-        audioRef.current.src = audioUrl;
-        await audioRef.current.play();
-        setIsPlaying(true);
-        onSpeakingStateChange?.(true);
+      setError(null);
+      if (recorderRef.current) {
+        await recorderRef.current.startRecording();
+        setIsListening(true);
       }
-    } catch (error) {
-      console.error("Audio playback error:", error);
+    } catch (err) {
+      console.error("Recording start error:", err);
+      setError("Failed to start recording");
     }
   };
 
-  const handleAudioEnded = () => {
-    setIsPlaying(false);
-    onSpeakingStateChange?.(false);
+  const stopListening = async () => {
+    try {
+      if (recorderRef.current && recorderRef.current.isRecording()) {
+        const audioBlob = await recorderRef.current.stopRecording();
+        await handleRecordingComplete(audioBlob);
+        setIsListening(false);
+      }
+    } catch (err) {
+      console.error("Recording stop error:", err);
+      setError("Failed to stop recording");
+      setIsListening(false);
+    }
   };
 
   return (
-    <div className="flex flex-col items-center space-y-4">
-      {/* Audio element for playback */}
-      <audio ref={audioRef} onEnded={handleAudioEnded} className="hidden" />
-
+    <div className="flex flex-col items-center space-y-4 p-6">
       {/* Microphone button */}
       <button
         onClick={isListening ? stopListening : startListening}
-        className={`p-6 rounded-full transition-all ${
+        disabled={isPlaying || !hasPermission}
+        className={`p-6 rounded-full transition-all shadow-lg ${
           isListening
             ? "bg-red-500 hover:bg-red-600 animate-pulse"
+            : isPlaying
+            ? "bg-gray-400 cursor-not-allowed"
             : "bg-blue-600 hover:bg-blue-700"
         }`}
         aria-label={isListening ? "Stop listening" : "Start listening"}
@@ -128,22 +210,45 @@ export default function AudioController({
       </button>
 
       {/* Status text */}
-      <div className="text-center">
-        {isListening && <p className="text-sm text-gray-600">Listening...</p>}
-        {isPlaying && (
-          <p className="text-sm text-gray-600">Doctor is speaking...</p>
+      <div className="text-center min-h-[24px]">
+        {!hasPermission && (
+          <p className="text-sm text-red-600">Microphone permission needed</p>
         )}
-        {!isListening && !isPlaying && (
+        {hasPermission && isListening && (
+          <p className="text-sm text-red-600 font-medium">🎤 Listening...</p>
+        )}
+        {hasPermission && isPlaying && (
+          <p className="text-sm text-blue-600 font-medium">
+            🔊 Doctor is speaking...
+          </p>
+        )}
+        {hasPermission && !isListening && !isPlaying && (
           <p className="text-sm text-gray-500">Click to speak</p>
         )}
       </div>
 
-      {/* Live transcript */}
-      {transcript && (
-        <div className="max-w-md p-4 bg-gray-100 rounded-lg">
-          <p className="text-sm text-gray-700">{transcript}</p>
+      {/* Error message */}
+      {error && (
+        <div className="max-w-md p-3 bg-red-100 border border-red-300 rounded-lg">
+          <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
+
+      {/* Live transcript */}
+      {transcript && (
+        <div className="max-w-md p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-xs text-gray-500 mb-1">You said:</p>
+          <p className="text-sm text-gray-800">{transcript}</p>
+        </div>
+      )}
+
+      {/* Mute toggle (for future use) */}
+      <button
+        onClick={() => setIsMuted(!isMuted)}
+        className="text-sm text-gray-600 hover:text-gray-800"
+      >
+        {isMuted ? "🔇 Unmute" : "🔊 Mute"}
+      </button>
     </div>
   );
 }
