@@ -15,9 +15,10 @@ interface AvatarProps {
   background?: string;
   avatarId?: string;
   onLoad?: () => void;
+  fullscreen?: boolean;
 }
 
-export default function Avatar({ isSpeaking = false, audioUrl, background, avatarId = "doctorm", onLoad }: AvatarProps) {
+export default function Avatar({ isSpeaking = false, audioUrl, background, avatarId = "doctorm", onLoad, fullscreen = false }: AvatarProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -31,6 +32,8 @@ export default function Avatar({ isSpeaking = false, audioUrl, background, avata
   const clockRef = useRef<THREE.Clock>(new THREE.Clock());
   const modelRef = useRef<THREE.Group | null>(null);
   const animationActionRef = useRef<THREE.AnimationAction | null>(null);
+  const idleActionRef = useRef<THREE.AnimationAction | null>(null);
+  const talkActionsRef = useRef<THREE.AnimationAction[]>([]);
   const jawBoneRef = useRef<THREE.Bone | null>(null);
   const jawInitialYRef = useRef<number | null>(null);
   const jawCloseOffsetRef = useRef<number>(0.005); // tweak to nudge jaw closed
@@ -79,6 +82,31 @@ export default function Avatar({ isSpeaking = false, audioUrl, background, avata
     }
   }, [isLoaded]);
 
+  // Switch between idle and talk animations based on isSpeaking
+  useEffect(() => {
+    if (!mixerRef.current || !idleActionRef.current || talkActionsRef.current.length === 0) return;
+
+    if (isSpeaking) {
+      // Pick random talk animation
+      const randomIndex = Math.floor(Math.random() * talkActionsRef.current.length);
+      const talkAction = talkActionsRef.current[randomIndex];
+      
+      // Crossfade from idle to talk
+      idleActionRef.current.fadeOut(0.3);
+      talkAction.reset().fadeIn(0.3).play();
+      animationActionRef.current = talkAction;
+      console.log("Avatar: Switching to talk animation", randomIndex + 1);
+    } else {
+      // Fade back to idle
+      if (animationActionRef.current && animationActionRef.current !== idleActionRef.current) {
+        animationActionRef.current.fadeOut(0.3);
+      }
+      idleActionRef.current.reset().fadeIn(0.3).play();
+      animationActionRef.current = idleActionRef.current;
+      console.log("Avatar: Switching back to idle animation");
+    }
+  }, [isSpeaking]);
+
   const initializeAvatar = async () => {
     if (!containerRef.current) return;
 
@@ -88,15 +116,20 @@ export default function Avatar({ isSpeaking = false, audioUrl, background, avata
       // scene.background = new THREE.Color(0xefe7ff); // Removed for transparency
       sceneRef.current = scene;
 
-      // Create camera - positioned to show from chest up
+      // Create camera - positioned based on fullscreen mode
       const camera = new THREE.PerspectiveCamera(
-        40, // Slightly tighter FOV for portrait framing
+        fullscreen ? 45 : 40, // Wider FOV for fullscreen
         containerRef.current.clientWidth / containerRef.current.clientHeight,
         0.1,
         100
       );
-      camera.position.set(0, 1.4, 1.8); // Closer and slightly lower
-      camera.lookAt(0, 1.3, 0); // Look at upper chest/neck area
+      if (fullscreen) {
+        camera.position.set(0, 2, 1.2); // Much lower so entire head is visible
+        camera.lookAt(0, 2, 0); // Look at upper chest area
+      } else {
+        camera.position.set(0, 1.4, 1.8); // Normal distance for setup
+        camera.lookAt(0, 1.3, 0); // Look at upper chest/neck area
+      }
       cameraRef.current = camera;
 
       // Create renderer
@@ -171,9 +204,9 @@ export default function Avatar({ isSpeaking = false, audioUrl, background, avata
       model.position.y = -box.min.y;
       model.position.z = -center.z;
       
-      // Scale to fit
+      // Scale based on fullscreen mode
       const maxDim = Math.max(size.x, size.y, size.z);
-      const scale = 1.8 / maxDim;
+      const scale = fullscreen ? 2.2 / maxDim : 1.8 / maxDim;
       model.scale.setScalar(scale);
       
       scene.add(model);
@@ -285,34 +318,9 @@ export default function Avatar({ isSpeaking = false, audioUrl, background, avata
       mixerRef.current.update(delta);
     }
 
-    // Apply jaw animation AFTER mixer updates (so it overrides the animation)
-    if (jawBoneRef.current) {
+    // Apply jaw animation ONLY when speaking
+    if (jawBoneRef.current && isSpeaking) {
       const elapsed = (Date.now() - jawStartTimeRef.current) / 1000;
-      
-      // Natural speech pattern: talk bursts with shorter pauses and slight jitter
-      // Make pauses shorter/faster to avoid long delays
-      const burstSpeed = 0.6; // higher => faster burst/pause cycles
-      const burstDuty = 0.75; // fraction of cycle spent talking (0..1) - larger -> shorter pauses
-      const fadeRange = 0.12; // smoothing range at edges
-
-      // Add tiny time-based jitter to avoid perfectly periodic pauses
-      const jitter = 0.05 * Math.sin(elapsed * 0.9 * Math.PI * 2);
-      const burstCycle = elapsed * burstSpeed + jitter;
-      const burstPhase = burstCycle % 1; // 0 to 1
-
-      // Create pauses: talk during the duty portion of each cycle
-      const inBurst = burstPhase < burstDuty;
-      let envelope = inBurst ? 1.0 : 0.0;
-      if (burstPhase < fadeRange) {
-        // Fade in at start of burst
-        envelope = burstPhase / fadeRange;
-      } else if (burstPhase > burstDuty - fadeRange && burstPhase < burstDuty) {
-        // Fade out before pause
-        envelope = (burstDuty - burstPhase) / fadeRange;
-      }
-
-      // If the component is actively speaking, bypass burst pauses
-      if (isSpeaking) envelope = 1.0;
       
       // Speech frequency and amplitude
       const frequency = 2.8; // realistic speech syllable rate
@@ -326,8 +334,8 @@ export default function Avatar({ isSpeaking = false, audioUrl, background, avata
       const t = (value + 1) / 2;
       const smoothed = t * t * (3 - 2 * t); // smoothstep
       
-      // Compute final open amount with envelope and modulation
-      const openAmount = smoothed * baseAmplitude * modulator * envelope;
+      // Compute final open amount with modulation (no envelope needed)
+      const openAmount = smoothed * baseAmplitude * modulator;
       
       // Base position
       const baseY = jawInitialYRef.current ?? 0;
@@ -340,6 +348,12 @@ export default function Avatar({ isSpeaking = false, audioUrl, background, avata
       // Scale slightly in X/Z when mouth opens (jaw widens a tiny bit)
       const scaleAmount = 1.0 + openAmount * 0.3; // very subtle
       jawBoneRef.current.scale.set(scaleAmount, 1.0, scaleAmount);
+    } else if (jawBoneRef.current && !isSpeaking) {
+      // Reset jaw to closed position when not speaking
+      const baseY = jawInitialYRef.current ?? 0;
+      const closeOffset = jawCloseOffsetRef.current;
+      jawBoneRef.current.position.y = baseY + closeOffset;
+      jawBoneRef.current.scale.set(1.0, 1.0, 1.0);
     }
 
     // Render scene
@@ -379,8 +393,11 @@ export default function Avatar({ isSpeaking = false, audioUrl, background, avata
     <div className="relative w-full max-w-md mx-auto">
       <div 
           ref={containerRef}
-          className={`aspect-square bg-gradient-to-br ${background || "from-purple-50 to-purple-100"} rounded-lg overflow-hidden`}
-          style={{ position: "relative" }}
+          className={fullscreen 
+            ? `fixed inset-0 bg-gradient-to-br ${background || "from-purple-50 to-purple-100"} overflow-hidden`
+            : `aspect-square bg-gradient-to-br ${background || "from-purple-50 to-purple-100"} rounded-lg overflow-hidden`
+          }
+          style={fullscreen ? { width: "100vw", height: "100vh", position: "fixed", top: 0, left: 0 } : { position: "relative" }}
         >
         {isMounted && !isLoaded && !error && (
           <div className="flex items-center justify-center h-full absolute inset-0">
