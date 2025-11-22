@@ -39,6 +39,22 @@ export default function CallInterface({
   const [shouldStartListening, setShouldStartListening] = useState(false);
   const [isAvatarLoaded, setIsAvatarLoaded] = useState(false);
 
+  // Function to stop all audio and end call
+  const handleEndCall = () => {
+    // Stop all audio elements
+    const audioElements = document.querySelectorAll("audio");
+    audioElements.forEach((audio) => {
+      audio.pause();
+      audio.currentTime = 0;
+    });
+
+    // Dispatch event to stop any ongoing audio playback
+    window.dispatchEvent(new CustomEvent("audioPlaybackEnd"));
+
+    // End the call
+    onEndCall(messages);
+  };
+
   useEffect(() => {
     const timer = setInterval(() => {
       setElapsedTime((prev) => prev + 1);
@@ -148,7 +164,7 @@ export default function CallInterface({
       {/* Header Controls */}
       <div className="flex justify-between items-center mb-6 z-10">
         <button
-          onClick={() => onEndCall(messages)}
+          onClick={handleEndCall}
           className="px-6 py-2 bg-red-500 text-white rounded-full text-sm font-bold hover:bg-red-600 transition-colors shadow-lg hover:shadow-red-200"
         >
           END CALL
