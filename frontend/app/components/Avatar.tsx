@@ -13,9 +13,10 @@ interface AvatarProps {
   isSpeaking?: boolean;
   audioUrl?: string;
   background?: string;
+  avatarId?: string;
 }
 
-export default function Avatar({ isSpeaking = false, audioUrl, background }: AvatarProps) {
+export default function Avatar({ isSpeaking = false, audioUrl, background, avatarId = "doctorm" }: AvatarProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -29,6 +30,9 @@ export default function Avatar({ isSpeaking = false, audioUrl, background }: Ava
   const clockRef = useRef<THREE.Clock>(new THREE.Clock());
   const modelRef = useRef<THREE.Group | null>(null);
   const animationActionRef = useRef<THREE.AnimationAction | null>(null);
+  const jawBoneRef = useRef<THREE.Bone | null>(null);
+  const jawInitialYRef = useRef<number | null>(null);
+  const jawCloseOffsetRef = useRef<number>(0.005); // tweak to nudge jaw closed
   
   // Lip sync
   const mouthValue = useLipSync(isSpeaking && audioUrl ? audioUrl : null);
@@ -46,25 +50,33 @@ export default function Avatar({ isSpeaking = false, audioUrl, background }: Ava
     return () => {
       cleanup();
     };
-  }, [isMounted]);
+  }, [isMounted, avatarId]);
 
-  // Handle lip sync mouth animation
+  // Cache jaw bone after model loads
   useEffect(() => {
-    if (!modelRef.current) return;
+    if (!modelRef.current || jawBoneRef.current) return;
 
-    // Find mouth bone or mesh to animate
-    // This is a simple approach - scale the jaw/mouth based on audio
     modelRef.current.traverse((child: THREE.Object3D) => {
       if (child instanceof THREE.Bone) {
-        // Look for jaw or mouth bone
-        if (child.name.toLowerCase().includes("jaw") || 
-            child.name.toLowerCase().includes("mouth")) {
-          // Animate jaw rotation based on mouth value
-          child.rotation.x = -mouthValue * 0.3; // Open mouth
+        if (child.name.toLowerCase().includes("jaw")) {
+          jawBoneRef.current = child;
+          // Cache initial jaw position so we can apply relative offsets
+          jawInitialYRef.current = child.position.y;
+          console.log("Avatar: Found jaw bone:", child.name, "initialY=", jawInitialYRef.current);
         }
       }
     });
-  }, [mouthValue]);
+  }, [isLoaded]);
+
+  // Jaw animation start time
+  const jawStartTimeRef = useRef<number>(Date.now());
+
+  useEffect(() => {
+    if (jawBoneRef.current) {
+      jawStartTimeRef.current = Date.now();
+      console.log("Avatar: Jaw animation ready");
+    }
+  }, [isLoaded]);
 
   const initializeAvatar = async () => {
     if (!containerRef.current) return;
@@ -126,9 +138,18 @@ export default function Avatar({ isSpeaking = false, audioUrl, background }: Ava
 
       // Load model with timeout and logging
       const loader = new GLTFLoader();
-      console.log("Avatar: starting model load /models/avatar.glb");
+      // Map avatarId to model file
+      const modelMap: Record<string, string> = {
+        "doctorm": "/models/DoctorM.glb",
+        "doctorf": "/models/DoctorF.glb",
+        "joe": "/models/DoctorM.glb", // fallback
+        "mark": "/models/DoctorM.glb",
+        "sasha": "/models/DoctorF.glb"
+      };
+      const modelPath = modelMap[avatarId.toLowerCase()] || "/models/DoctorM.glb";
+      console.log("Avatar: starting model load", modelPath);
       const timeoutMs = 15000; // 15s
-      const loadPromise = loader.loadAsync("/models/avatar.glb");
+      const loadPromise = loader.loadAsync(modelPath);
       const gltf = await Promise.race([
         loadPromise,
         new Promise((_, reject) =>
@@ -161,10 +182,25 @@ export default function Avatar({ isSpeaking = false, audioUrl, background }: Ava
         const mixer = new THREE.AnimationMixer(model);
         mixerRef.current = mixer;
         
-        // Play the first animation (mixamo.com)
-        const action = mixer.clipAction(gltf.animations[0]);
-        action.play();
-        animationActionRef.current = action;
+        console.log("Avatar: Available animations:", gltf.animations.map((a: THREE.AnimationClip) => a.name));
+        
+        // Find and play DoctorM Idle animation
+        const idleClip = gltf.animations.find((clip: THREE.AnimationClip) => 
+          clip.name.toLowerCase().includes("idle")
+        );
+        
+        if (idleClip) {
+          const action = mixer.clipAction(idleClip);
+          action.play();
+          animationActionRef.current = action;
+          console.log("Avatar: Playing animation:", idleClip.name);
+        } else {
+          // Fallback to first animation
+          const action = mixer.clipAction(gltf.animations[0]);
+          action.play();
+          animationActionRef.current = action;
+          console.log("Avatar: Playing first animation:", gltf.animations[0].name);
+        }
       }
 
       // Configure materials for better appearance
@@ -183,6 +219,20 @@ export default function Avatar({ isSpeaking = false, audioUrl, background }: Ava
             if (child.material instanceof THREE.MeshStandardMaterial) {
               child.material.roughness = 0.6;
               child.material.metalness = 0.0;
+              
+              // Force opaque rendering - disable transparency
+              child.material.transparent = false;
+              child.material.opacity = 1.0;
+              child.material.alphaTest = 0;
+              child.material.depthWrite = true;
+              child.material.side = THREE.FrontSide;
+              
+              // If there's an alpha map, remove it
+              if (child.material.alphaMap) {
+                child.material.alphaMap = null;
+              }
+              
+              child.material.needsUpdate = true;
             }
           }
         }
@@ -229,6 +279,63 @@ export default function Avatar({ isSpeaking = false, audioUrl, background }: Ava
     if (mixerRef.current) {
       const delta = clockRef.current.getDelta();
       mixerRef.current.update(delta);
+    }
+
+    // Apply jaw animation AFTER mixer updates (so it overrides the animation)
+    if (jawBoneRef.current) {
+      const elapsed = (Date.now() - jawStartTimeRef.current) / 1000;
+      
+      // Natural speech pattern: talk bursts with shorter pauses and slight jitter
+      // Make pauses shorter/faster to avoid long delays
+      const burstSpeed = 0.6; // higher => faster burst/pause cycles
+      const burstDuty = 0.75; // fraction of cycle spent talking (0..1) - larger -> shorter pauses
+      const fadeRange = 0.12; // smoothing range at edges
+
+      // Add tiny time-based jitter to avoid perfectly periodic pauses
+      const jitter = 0.05 * Math.sin(elapsed * 0.9 * Math.PI * 2);
+      const burstCycle = elapsed * burstSpeed + jitter;
+      const burstPhase = burstCycle % 1; // 0 to 1
+
+      // Create pauses: talk during the duty portion of each cycle
+      const inBurst = burstPhase < burstDuty;
+      let envelope = inBurst ? 1.0 : 0.0;
+      if (burstPhase < fadeRange) {
+        // Fade in at start of burst
+        envelope = burstPhase / fadeRange;
+      } else if (burstPhase > burstDuty - fadeRange && burstPhase < burstDuty) {
+        // Fade out before pause
+        envelope = (burstDuty - burstPhase) / fadeRange;
+      }
+
+      // If the component is actively speaking, bypass burst pauses
+      if (isSpeaking) envelope = 1.0;
+      
+      // Speech frequency and amplitude
+      const frequency = 2.8; // realistic speech syllable rate
+      const baseAmplitude = 0.025;
+      
+      // Vary amplitude slightly over time (different syllable intensities)
+      const modulator = 0.7 + 0.3 * Math.sin(elapsed * 1.2 * Math.PI * 2);
+      
+      // Primary jaw open/close cycle
+      const value = Math.sin(elapsed * frequency * Math.PI * 2);
+      const t = (value + 1) / 2;
+      const smoothed = t * t * (3 - 2 * t); // smoothstep
+      
+      // Compute final open amount with envelope and modulation
+      const openAmount = smoothed * baseAmplitude * modulator * envelope;
+      
+      // Base position
+      const baseY = jawInitialYRef.current ?? 0;
+      const closeOffset = jawCloseOffsetRef.current;
+      
+      // Apply vertical movement
+      jawBoneRef.current.position.y = baseY + closeOffset - openAmount;
+      
+      // Add subtle scaling for more natural deformation
+      // Scale slightly in X/Z when mouth opens (jaw widens a tiny bit)
+      const scaleAmount = 1.0 + openAmount * 0.3; // very subtle
+      jawBoneRef.current.scale.set(scaleAmount, 1.0, scaleAmount);
     }
 
     // Render scene
@@ -293,6 +400,8 @@ export default function Avatar({ isSpeaking = false, audioUrl, background }: Ava
             </div>
           </div>
         )}
+
+        {/* Debug button removed */}
       </div>
 
       {/* Removed Dr. AI Assistant text as per user request */}
