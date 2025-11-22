@@ -12,9 +12,10 @@ import { useLipSync } from "../hooks/useLipSync";
 interface AvatarProps {
   isSpeaking?: boolean;
   audioUrl?: string;
+  background?: string;
 }
 
-export default function Avatar({ isSpeaking = false, audioUrl }: AvatarProps) {
+export default function Avatar({ isSpeaking = false, audioUrl, background }: AvatarProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -71,7 +72,7 @@ export default function Avatar({ isSpeaking = false, audioUrl }: AvatarProps) {
     try {
       // Create scene
       const scene = new THREE.Scene();
-      scene.background = new THREE.Color(0xefe7ff); // Soft light purple
+      // scene.background = new THREE.Color(0xefe7ff); // Removed for transparency
       sceneRef.current = scene;
 
       // Create camera - positioned to show from chest up
@@ -267,7 +268,7 @@ export default function Avatar({ isSpeaking = false, audioUrl }: AvatarProps) {
     <div className="relative w-full max-w-md mx-auto">
       <div 
           ref={containerRef}
-          className="aspect-square bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg overflow-hidden shadow-lg"
+          className={`aspect-square bg-gradient-to-br ${background || "from-purple-50 to-purple-100"} rounded-lg overflow-hidden`}
           style={{ position: "relative" }}
         >
         {isMounted && !isLoaded && !error && (
@@ -294,12 +295,8 @@ export default function Avatar({ isSpeaking = false, audioUrl }: AvatarProps) {
         )}
       </div>
 
-      <div className="mt-4 text-center">
-        <h3 className="text-lg font-semibold text-gray-800">
-          Dr. AI Assistant
-        </h3>
-        <p className="text-sm text-gray-600">Here to help you</p>
+      {/* Removed Dr. AI Assistant text as per user request */}
       </div>
-    </div>
+
   );
 }
