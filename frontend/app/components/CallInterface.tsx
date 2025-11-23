@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { API_BASE_URL } from "../../lib/config";
 import Avatar from "./Avatar";
 import AudioController from "./AudioController";
 import VideoFeed from "./VideoFeed";
@@ -118,7 +119,7 @@ export default function CallInterface({
     const greeting = "Hello! I'm your AI Doctor. How are you feeling today?";
 
     try {
-      const response = await fetch("http://localhost:8000/api/tts", {
+      const response = await fetch(`${API_BASE_URL}/api/tts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

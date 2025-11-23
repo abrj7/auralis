@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { generatePDF } from "../utils/pdfGenerator";
+import { API_BASE_URL } from "../../lib/config";
 
 interface Message {
   role: "user" | "assistant";
@@ -60,7 +61,7 @@ export default function SummaryPage({
         msg.timestamp.toISOString()
       );
 
-      const response = await fetch("http://localhost:8000/api/insights", {
+      const response = await fetch(`${API_BASE_URL}/api/insights`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

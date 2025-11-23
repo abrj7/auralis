@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { API_BASE_URL } from "../../lib/config";
 import Avatar from "./Avatar";
 import Image from "next/image";
 import doctormImg from "../avatar_images/doctorm.png";
@@ -76,7 +77,7 @@ export default function SetupPage({
 
   const playVoicePreview = async (voiceId: string) => {
     try {
-      const response = await fetch("http://localhost:8000/api/tts", {
+      const response = await fetch(`${API_BASE_URL}/api/tts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

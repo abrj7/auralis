@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AudioRecorder, playAudio } from "@/lib/audioUtils";
+import { API_BASE_URL } from "../../lib/config";
 
 interface AudioControllerProps {
   onTranscript?: (text: string) => void;
@@ -224,7 +225,7 @@ export default function AudioController({
       onClearEmotionHistory?.();
 
       // Call real Gemini chat API
-      const response = await fetch("http://localhost:8000/api/chat", {
+      const response = await fetch(`${API_BASE_URL}/api/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -277,7 +278,7 @@ export default function AudioController({
 
     try {
       setError(null);
-      const response = await fetch("http://localhost:8000/api/tts", {
+      const response = await fetch(`${API_BASE_URL}/api/tts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
