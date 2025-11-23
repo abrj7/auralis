@@ -21,9 +21,11 @@ interface Message {
 }
 
 const BG_OPTIONS = [
-  { id: "bg1", color: "from-blue-50 to-indigo-50" },
-  { id: "bg2", color: "from-rose-50 to-orange-50" },
-  { id: "bg3", color: "from-emerald-50 to-teal-50" },
+  { id: "bg1", color: "bg-blue-200" },
+  { id: "bg2", color: "bg-rose-200" },
+  { id: "bg3", color: "bg-emerald-200" },
+  { id: "bg4", color: "bg-purple-200" },
+  { id: "bg5", color: "bg-amber-200" },
 ];
 
 export default function CallInterface({
@@ -200,11 +202,11 @@ export default function CallInterface({
 
   const bgClass =
     BG_OPTIONS.find((b) => b.id === selectedBg)?.color ||
-    "from-blue-50 to-indigo-50";
+    "bg-blue-200";
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-br ${bgClass} p-4 md:p-6 flex flex-col transition-colors duration-500`}
+      className={`min-h-screen ${bgClass} p-4 md:p-6 flex flex-col transition-colors duration-500`}
     >
       {/* Header Controls */}
       <div className="flex justify-between items-center mb-6 z-10">

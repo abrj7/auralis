@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import Avatar from "./Avatar";
 import Image from "next/image";
@@ -20,17 +20,19 @@ interface SetupPageProps {
 }
 
 const AVATAR_OPTIONS = [
-  { id: "doctorm", name: "Doctor M", color: "bg-blue-100", image: doctormImg },
-  { id: "doctorf", name: "Doctor F", color: "bg-purple-100", image: doctorfImg },
+  { id: "doctorm", name: "Felix", color: "bg-blue-100", image: doctormImg },
+  { id: "doctorf", name: "Matilda", color: "bg-purple-100", image: doctorfImg },
   { id: "baymax", name: "Baymax", color: "bg-red-100", image: baymaxImg },
 ];
 
 
 
 const BG_OPTIONS = [
-  { id: "bg1", color: "from-blue-50 to-indigo-50" },
-  { id: "bg2", color: "from-rose-50 to-orange-50" },
-  { id: "bg3", color: "from-emerald-50 to-teal-50" },
+  { id: "bg1", color: "bg-blue-200" },
+  { id: "bg2", color: "bg-rose-200" },
+  { id: "bg3", color: "bg-emerald-200" },
+  { id: "bg4", color: "bg-purple-200" },
+  { id: "bg5", color: "bg-amber-200" },
 ];
 
 export default function SetupPage({
@@ -43,6 +45,8 @@ export default function SetupPage({
   selectedVoice,
   setSelectedVoice,
 }: SetupPageProps) {
+  const isInitialLoad = useRef(true);
+
   // Voice options mapped by avatar ID
   const VOICE_MAP: Record<string, { id: string; name: string }[]> = {
     doctorm: [
@@ -71,6 +75,8 @@ export default function SetupPage({
     const defaultVoice = VOICE_MAP[avatarId]?.[0]?.id;
     if (defaultVoice) {
       setSelectedVoice(defaultVoice);
+      // Play preview when avatar changes
+      playVoicePreview(defaultVoice);
     }
   };
 
@@ -99,6 +105,14 @@ export default function SetupPage({
     }
   };
 
+  // Play voice preview on component mount
+  useEffect(() => {
+    if (isInitialLoad.current) {
+      playVoicePreview(selectedVoice);
+      isInitialLoad.current = false;
+    }
+  }, [selectedVoice]);
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 md:p-8">
       <motion.div
@@ -108,7 +122,7 @@ export default function SetupPage({
       >
         {/* Left Side - Avatar Preview */}
         <div
-          className={`w-full md:w-1/2 p-8 flex flex-col items-center justify-center bg-gradient-to-br ${
+          className={`w-full md:w-1/2 p-8 flex flex-col items-center justify-center ${
             BG_OPTIONS.find((b) => b.id === selectedBg)?.color
           } transition-colors duration-500 relative`}
         >
@@ -157,7 +171,7 @@ export default function SetupPage({
           <div className="space-y-8">
             {/* Avatar Selection */}
             <div>
-              <h3 className="text-lg font-semibold mb-4 text-black">Avatar</h3>
+              <h3 className="text-lg font-semibold mb-4 text-black">Choose your Doctor</h3>
               <div className="flex space-x-4">
                 {AVATAR_OPTIONS.map((avatar) => (
                   <button
@@ -212,7 +226,9 @@ export default function SetupPage({
 
             {/* Voice Selection */}
             <div>
-              <h3 className="text-lg font-semibold mb-4 text-black">Voice</h3>
+              <h3 className="text-lg font-semibold mb-4 text-black">
+                Choose {AVATAR_OPTIONS.find((a) => a.id === selectedAvatar)?.name}'s Voice
+              </h3>
               <div className="flex space-x-4">
                 {currentVoiceOptions.map((voice) => (
                   <button
