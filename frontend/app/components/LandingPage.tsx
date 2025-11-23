@@ -38,18 +38,24 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
         className="z-10 text-center px-4 max-w-4xl mx-auto"
       >
         <div className="mb-6 inline-block px-4 py-1.5 rounded-full bg-white/50 backdrop-blur-sm border border-white/50 text-sm font-medium text-gray-600 shadow-sm">
-          The Future of Healthcare
+          Kickstarting the Future of Healthcare
         </div>
         
-        <h1 className="text-6xl md:text-8xl font-bold mb-6 tracking-tight text-gray-900">
-          First Ever <br />
-          <span className="text-gradient">AI Doctor</span>
-        </h1>
-
-        <p className="text-xl md:text-2xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-          Experience the next generation of medical consultation. 
-          Instant, accurate, and empathetic care powered by advanced AI.
+         <p className="text-xl md:text-2xl text-gray-600 mb-2 font-medium">
+          Meet the
         </p>
+
+        <h1 className="text-6xl md:text-8xl font-bold mb-2 tracking-tight">
+          <span className="text-black">FIRST EVER</span>
+        </h1>
+        
+        <p className="text-xl md:text-2xl text-gray-600 mb-2 font-medium">
+          personalized AI Doctor,
+        </p>
+
+        <h1 className="text-6xl md:text-8xl font-bold mb-10 tracking-tight">
+          <span className="text-gradient">AURALIS</span>
+        </h1>
 
         <motion.button
           whileHover={{ scale: 1.05 }}

@@ -19,7 +19,7 @@ export const generatePDF = (data: SummaryData) => {
     doc.setFont("times", "bold");
     doc.setFontSize(24);
     doc.setTextColor(0, 0, 0); // Black for seriousness
-    doc.text("BAYMAX AI", pageWidth / 2, currentY, { align: "center" });
+    doc.text("AURALIS", pageWidth / 2, currentY, { align: "center" });
 
     currentY += 8;
     doc.setFontSize(12);
@@ -122,7 +122,7 @@ export const generatePDF = (data: SummaryData) => {
 
     doc.setFont("times", "bolditalic");
     doc.setFontSize(14);
-    doc.text("Baymax AI System", pageWidth - margin, currentY, { align: "right" });
+    doc.text("AURALIS AI System", pageWidth - margin, currentY, { align: "right" });
 
     currentY += 5;
     doc.setDrawColor(0, 0, 0);
