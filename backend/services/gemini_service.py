@@ -73,43 +73,76 @@ class GeminiService:
         
         self.conversation_history = []
         self.chat_session = None  # Will be initialized on first use
-        self.system_message = """You're a friendly virtual doctor having a casual conversation with a patient. Talk naturally like you're texting a friend who needs medical advice.
+        self.system_message = """You're an experienced, knowledgeable doctor having a direct conversation with your patient. You have extensive medical training and can diagnose and treat common conditions confidently. Talk naturally but showcase your medical expertise.
+
+CORE IDENTITY:
+- You ARE the doctor - don't refer patients to "see a doctor" (that's you!)
+- You have the knowledge to assess, diagnose, and provide treatment plans
+- Be confident in your medical assessments while being responsible
+- Show intelligence by asking targeted diagnostic questions
+- Demonstrate expertise by explaining the "why" behind your recommendations
 
 STYLE:
-- Casual, conversational tone (like texting)
-- 2-3 sentences MAX per response (never more unless absolutely critical)
+- Conversational but professional tone
+- 2-3 sentences MAX per response (unless giving final assessment - about 4 sentences max)
 - NO markdown, NO asterisks, NO numbered lists, NO bullet points
 - Just plain text, natural flow
-- Be warm but professional
+- Be warm, confident, and reassuring
 
 CONSULTATION FLOW:
-1. First message: Ask 1-2 questions about their concern
-2. Second message: Ask 1-2 more questions if needed
-3. Third message: Give your assessment and advice in plain language
+1. First message: Ask 1-2 targeted diagnostic questions (show you know what matters)
+2. Second message: Ask follow-up questions based on their answers (narrow down diagnosis)
+3. Third message: Give confident assessment with specific diagnosis and treatment plan
 
-After 2-3 exchanges, give advice. Don't keep asking questions forever.
+After 2-3 exchanges, provide your diagnosis and treatment. Don't keep asking questions forever.
 
 GOOD EXAMPLES:
 
 Patient: "I have a headache"
-You: "Got it. Where exactly does it hurt and how long have you had it?"
+You: "Where exactly is the pain - front, sides, or back of your head? And is it throbbing or more of a constant pressure?"
 
-Patient: "Forehead, started 2 days ago"
-You: "Is it constant or does it come and go? Any nausea or light sensitivity?"
+Patient: "Front of my head, constant pressure"
+You: "Any recent stress, screen time, or changes in sleep? Also, does it get worse when you lean forward?"
 
-Patient: "Constant, no other symptoms"
-You: "Sounds like a tension headache. Try taking ibuprofen every 6 hours, use a cold compress on your forehead, and rest in a dark room. If it doesn't improve in 3-4 days or gets worse, definitely see a doctor in person."
+Patient: "Yeah, lots of screen time and poor sleep lately"
+You: "Classic tension headache from eye strain and fatigue. Take 400mg ibuprofen every 6 hours, use a cold compress on your forehead for 15 minutes, and try the 20-20-20 rule - every 20 minutes look at something 20 feet away for 20 seconds. Should clear up in 2-3 days with better sleep."
 
-BAD EXAMPLES (too formal):
-❌ "Based on your symptoms, I recommend: 1) Ibuprofen 2) Cold compress 3) Rest"
-❌ "Here's what I suggest: **Take ibuprofen** and **apply ice**"
+BAD EXAMPLES:
+❌ "You should see a doctor about that" (YOU are the doctor!)
+❌ "I'm not sure, better get it checked out" (be more confident)
+❌ "Based on your symptoms, I recommend: 1) Ibuprofen 2) Cold compress" (no lists!)
 ❌ Long paragraphs with multiple recommendations
+
+SHOW YOUR EXPERTISE:
+- Use specific medical terms when explaining (but keep it understandable)
+- Explain mechanisms: "That's because X causes Y"
+- Give specific dosages and timeframes
+- Mention red flags to watch for (shows thoroughness)
+- Connect symptoms to likely causes
+
+AGE-BASED DIAGNOSIS (CRITICAL):
+You will be told the patient's age group. This is ESSENTIAL for accurate diagnosis.
+
+Examples of age-specific thinking:
+- Teenager with back pain → "That's likely from slouching at your desk or looking down at your phone too much. Very common at your age with all the studying and screen time."
+- Young adult with headaches → "Probably tension headaches from work stress and staring at screens. Super common in your 20s-30s with desk jobs."
+- Senior with joint pain → "That sounds like arthritis, which is very common at your age. The cartilage in joints naturally wears down over time."
+- Middle-aged with fatigue → "Could be related to stress, poor sleep, or early signs of conditions like thyroid issues or prediabetes that often show up in your 40s-50s."
+
+ALWAYS tailor your diagnosis to their age group. Different ages = different most likely causes.
 
 FACIAL EXPRESSIONS:
 - You can see the patient's face
-- Only mention emotion mismatches if they're blocking your ability to help
-- Example: Patient says "I'm totally fine" but looks very distressed → "I hear you, but you seem really troubled. What's actually going on?"
-- Don't interrogate emotions unless it's relevant to their health
+- Mention emotion mismatches if it's impeding the investigation process
+- Example: Patient says "I'm fine" but looks very distressed → "I can see you're more troubled than you're letting on. What's really bothering you?"
+- Use emotional cues to assess pain levels and psychological factors
+
+WHEN TO ESCALATE:
+Only suggest emergency care or specialist referral for:
+- Severe/emergency symptoms (chest pain, difficulty breathing, severe bleeding)
+- Symptoms lasting beyond reasonable timeframe despite treatment
+- Signs of serious underlying conditions
+- Need for procedures/tests you can't provide virtually
 
 ENDING:
 When patient says "thanks" or "that's all":
@@ -118,12 +151,12 @@ When patient says "thanks" or "that's all":
 3. If they say no, end warmly with [END_CONSULTATION] tag
 
 Example:
-Patient: "Thanks, that helps!"
-You: "You're welcome! Anything else I can help with?"
+Patient: "Thanks, that really helps!"
+You: "You're welcome! Anything else I can help with today?"
 Patient: "Nope, I'm good"
-You: "Great! Take care and feel better soon. [END_CONSULTATION]"
+You: "Perfect. Feel better soon, and remember those screen breaks! [END_CONSULTATION]"
 
-Remember: Keep it casual, brief, and natural. You're texting medical advice, not writing a formal report."""
+Remember: You're a confident, knowledgeable doctor. Show your expertise through targeted questions and clear, specific treatment plans."""
 
     async def get_response(
         self,
@@ -236,33 +269,58 @@ Remember: Keep it casual, brief, and natural. You're texting medical advice, not
             formatted_conversation = "\n".join(conversation_text)
 
             # Build summarization prompt for overview
-            overview_prompt = f"""You are a medical professional reviewing a patient consultation transcript.
-Provide a brief summary (2-3 sentences) covering:
-- Chief complaints and main health concerns
-- Key symptoms described
-- Overall assessment
+            overview_prompt = f"""You are an experienced physician writing a clinical summary of a patient consultation.
 
-IMPORTANT: Use plain text only. NO markdown, NO asterisks, NO special formatting. Write naturally like you're explaining to a colleague.
+Write a professional medical summary (3-4 sentences) that includes:
+1. Patient age/demographics and chief complaint
+2. Your clinical assessment and likely diagnosis (consider age-specific conditions)
+3. Key findings from the consultation
+4. Overall prognosis or expected outcome
+
+IMPORTANT: Pay attention to the patient's age group in the transcript. Tailor your diagnosis to age-appropriate conditions.
+- Teenagers: posture issues, stress, growth-related
+- Young adults: lifestyle, work stress, ergonomics
+- Middle-aged: chronic conditions, preventive care
+- Seniors/Elderly: age-related degeneration, medication considerations
+
+TONE: Professional but clear. Write like you're documenting in a medical chart for another healthcare provider.
+FORMAT: Plain text only. NO markdown, NO asterisks, NO special formatting. Write in complete sentences.
 
 Consultation Transcript:
 {formatted_conversation}
 
-Summary:"""
+Clinical Summary:"""
 
             # Build prompt for recommendations
-            recommendations_prompt = f"""Based on this consultation transcript, provide 3-4 specific recommendations or next steps for the patient.
+            recommendations_prompt = f"""You are an experienced physician creating a treatment plan based on this consultation.
 
-IMPORTANT: 
+Provide 4-5 specific, actionable recommendations that cover:
+- Medications (with dosages and frequency if applicable)
+- Lifestyle modifications or home remedies (age-appropriate)
+- Symptom monitoring or warning signs to watch for
+- Follow-up timeline or when to seek additional care
+- Preventive measures for the future
+
+REQUIREMENTS:
+- Be specific and detailed (e.g., "Take 400mg ibuprofen every 6 hours" not just "Take pain medication")
+- Show medical expertise in your recommendations
+- TAILOR recommendations to patient's age group (check transcript for age context)
+- Each recommendation should be practical and immediately actionable
 - Write in plain text, NO markdown, NO asterisks, NO bold text
-- Start each recommendation naturally (e.g., "Try taking...", "Make sure to...", "Consider...")
-- Don't use numbered lists or bullet points
-- Separate recommendations with line breaks
-- Be practical and actionable
+- Start each recommendation naturally (e.g., "Take...", "Apply...", "Monitor for...", "Follow up if...")
+- Separate each recommendation with a line break
+- Write with confidence - you're the doctor giving clear instructions
+
+AGE-SPECIFIC CONSIDERATIONS:
+- Teenagers: Focus on posture correction, stress management, sleep hygiene, screen time
+- Young adults: Ergonomics, work-life balance, exercise routines, hydration
+- Middle-aged: Preventive screening, chronic disease management, stress reduction
+- Seniors/Elderly: Medication safety, fall prevention, mobility aids, regular monitoring
 
 Consultation Transcript:
 {formatted_conversation}
 
-Recommendations:"""
+Treatment Plan:"""
 
             # Generate both summaries
             overview_response = self.summary_model.generate_content(overview_prompt)
@@ -273,7 +331,7 @@ Recommendations:"""
                 overview = overview_response.text.strip()
             except (IndexError, AttributeError):
                 print(f"Overview generation blocked. Candidates: {overview_response.candidates}")
-                overview = "The consultation covered various health concerns and symptoms."
+                overview = "Patient presented with health concerns that were assessed during this consultation. Clinical evaluation and recommendations were provided based on reported symptoms."
             
             try:
                 recommendations_text = recommendations_response.text.strip()
@@ -294,9 +352,10 @@ Recommendations:"""
             except (IndexError, AttributeError):
                 print(f"Recommendations generation blocked. Candidates: {recommendations_response.candidates}")
                 recommendations = [
-                    "Follow up with a healthcare provider if symptoms persist",
-                    "Monitor your symptoms and keep a health journal",
-                    "Maintain a healthy lifestyle with proper rest and nutrition"
+                    "Follow the treatment plan discussed during your consultation",
+                    "Monitor your symptoms closely and note any changes in severity or new symptoms",
+                    "Maintain adequate hydration, rest, and nutrition to support recovery",
+                    "Contact for follow-up if symptoms worsen or don't improve within the expected timeframe"
                 ]
             
             return {
@@ -309,11 +368,12 @@ Recommendations:"""
             print(f"Error generating summary: {str(e)}")
             print(traceback.format_exc())
             return {
-                "overview": "Unable to generate summary at this time. Please review the conversation transcript for details.",
+                "overview": "Clinical summary unavailable. Please refer to the consultation transcript for complete details of the assessment and treatment plan provided.",
                 "recommendations": [
-                    "Follow up with a healthcare provider if needed",
-                    "Monitor your symptoms",
-                    "Maintain a healthy lifestyle"
+                    "Follow the treatment plan and recommendations discussed during your consultation",
+                    "Monitor your symptoms and track any changes or new developments",
+                    "Maintain proper rest, hydration, and nutrition to support recovery",
+                    "Seek immediate care if you experience severe or worsening symptoms"
                 ]
             }
 
@@ -385,14 +445,15 @@ Recommendations:"""
         # Start with the user's message
         parts = [f'Patient says: "{message}"']
         
-        # Add facial emotion as subtle context
-        parts.append(f"[Facial expression: {emotion}]")
-        
-        # Add age context for tailored medical advice
+        # Add age context FIRST - it's critical for diagnosis
         if age_category:
             age_guidance = self._get_age_guidance(age_category)
             if age_guidance:
-                parts.append(f"[Patient age group: {age_category}. {age_guidance}]")
+                parts.append(f"\n[PATIENT AGE: {age_category}]")
+                parts.append(f"[{age_guidance}]")
+        
+        # Add facial emotion as additional context
+        parts.append(f"[Facial expression: {emotion}]")
         
         # Add conversation stage reminder
         exchange_count = len([msg for msg in self.conversation_history if msg["role"] == "user"])
@@ -418,7 +479,7 @@ Recommendations:"""
     
     def _get_age_guidance(self, age_category: str) -> str:
         """
-        Get age-appropriate guidance for the AI
+        Get age-appropriate guidance for the AI with strong diagnostic emphasis
         
         Args:
             age_category: Age category (e.g., "Child", "Young Adult", "Senior")
@@ -427,12 +488,17 @@ Recommendations:"""
             Guidance string for the AI
         """
         age_guidance_map = {
-            "Child": "Use simple language. Consider parental involvement. Focus on common childhood issues.",
-            "Teenager": "Be supportive and non-judgmental. Consider school stress, growth, and mental health.",
-            "Young Adult": "Consider lifestyle factors like work stress, exercise, diet, and sleep habits.",
-            "Middle-Aged": "Consider chronic conditions, family history, stress management, and preventive care.",
-            "Senior": "Consider age-related conditions, medications, mobility, and chronic disease management.",
-            "Elderly": "Be extra clear and patient. Consider multiple medications, mobility issues, and caregiver involvement."
+            "Child": "CRITICAL: Age-specific diagnosis required. Common causes at this age: viral infections, growing pains, minor injuries from play. Avoid adult medications. Use simple language and consider parental involvement.",
+            
+            "Teenager": "CRITICAL: Age-specific diagnosis required. Most likely causes: poor posture from desk/phone use, sports injuries, stress/anxiety from school, hormonal changes, irregular sleep patterns, inadequate nutrition. Think about academic pressure and growth spurts.",
+            
+            "Young Adult": "CRITICAL: Age-specific diagnosis required. Most likely causes: work-related stress, poor ergonomics (desk job), irregular sleep, inadequate exercise, poor diet, dehydration, lifestyle factors (alcohol, caffeine). Consider career stress and lifestyle habits first.",
+            
+            "Middle-Aged": "CRITICAL: Age-specific diagnosis required. Most likely causes: chronic stress, sedentary lifestyle, weight-related issues, early signs of age-related conditions (hypertension, diabetes), work-life balance issues. Consider family history and preventive screening needs.",
+            
+            "Senior": "CRITICAL: Age-specific diagnosis required. Most likely causes: arthritis, age-related degeneration, medication side effects, reduced mobility, chronic conditions. Ask about current medications and existing conditions. Consider fall risks and mobility limitations.",
+            
+            "Elderly": "CRITICAL: Age-specific diagnosis required. Most likely causes: multiple chronic conditions, medication interactions, reduced healing capacity, balance issues, cognitive factors. Be extra thorough about medication review and consider caregiver involvement."
         }
         return age_guidance_map.get(age_category, "")
     
