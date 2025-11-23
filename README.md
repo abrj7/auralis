@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="frontend/public/apple-touch-icon.png" alt="AURALIS Logo" width="100" height="100">
+    <!-- <img src="frontend/public/apple-touch-icon.png" alt="AURALIS Logo" width="100" height="100"> -->
     <h1>AURALIS</h1>
     <p><em>The FIRST EVER Personalized AI Doctor</em></p>
 </div>
