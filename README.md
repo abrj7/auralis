@@ -6,13 +6,22 @@
 
 ---
 
-## 🌟 Overview
+## Overview
 
-**AURALIS** is a revolutionary AI-powered virtual doctor that combines cutting-edge artificial intelligence, real-time emotion detection, and immersive 3D avatars to deliver personalized medical consultations. By analyzing facial expressions and adapting responses based on emotional states, AURALIS provides empathetic, context-aware healthcare guidance that feels truly human.
+**AURALIS** is an avatar-based AI-powered virtual doctor that combines cutting-edge artificial intelligence, real-time emotion detection, and immersive 3D avatars to deliver personalized medical consultations. By analyzing facial expressions and adapting responses based on emotional states, AURALIS provides empathetic, context-aware healthcare guidance that feels truly human.
+
+---
+## Demo Images
+<div style="display: flex; flex-wrap: wrap; gap: 10px;">
+  <img src="https://github.com/user-attachments/assets/011d3388-540d-401c-a130-58c9c32a14c5" alt="Screenshot 1" width="48%" />
+  <img src="https://github.com/user-attachments/assets/1ecea655-e524-48e5-adad-6275a9fdfcbd" alt="Screenshot 2" width="48%" />
+  <img src="https://github.com/user-attachments/assets/789bb60d-b837-4214-99c0-67473e90312f" alt="Screenshot 3" width="48%" />
+  <img src="https://github.com/user-attachments/assets/7854c67c-5c99-43a7-ad7a-7a684f120476" alt="Screenshot 4" width="48%" />
+</div>
 
 ---
 
-## 🎯 How AURALIS Works
+## How AURALIS Works
 
 ### 1. **Landing & Setup**
 - Users are greeted with an elegant landing page featuring a dynamic liquid ether background
@@ -41,7 +50,7 @@ The backend continuously monitors:
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### **Frontend**
 | Technology | Purpose |
@@ -75,7 +84,7 @@ The backend continuously monitors:
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### **Prerequisites**
 - **Node.js** (v18 or higher)
@@ -100,7 +109,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 ---
 
-## 📦 Installation & Setup
+## Installation & Setup
 
 ### **Backend Setup**
 
@@ -150,7 +159,7 @@ The frontend will be available at `http://localhost:3000`
 
 ---
 
-## 🎮 Usage
+## Usage
 
 1. **Start both servers** (backend on port 8000, frontend on port 3000)
 2. **Open your browser** and navigate to `http://localhost:3000`
@@ -162,7 +171,7 @@ The frontend will be available at `http://localhost:3000`
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 hackwestern/
@@ -205,7 +214,7 @@ hackwestern/
 
 ---
 
-## 🎨 Key Features
+## Key Features
 
 ### **Emotion Detection Pipeline**
 1. Webcam captures user's face at 30 FPS
@@ -230,7 +239,7 @@ hackwestern/
 
 ---
 
-## 🔒 Privacy & Disclaimers
+## Privacy & Disclaimers
 
 - All webcam and audio data is processed in real-time and **not stored**
 - Conversations are **not saved** after the session ends
@@ -239,15 +248,9 @@ hackwestern/
 
 ---
 
-## 👥 Team
+## Team
 
-Built with ❤️ at Hack Western
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
+Built with ❤️ at Hack Western by 
 
 ---
 
