@@ -8,7 +8,8 @@
 
 ## Overview
 
-**AURALIS** is an avatar-based AI-powered virtual doctor that combines cutting-edge artificial intelligence, real-time emotion detection, and immersive 3D avatars to deliver personalized medical consultations. By analyzing facial expressions and adapting responses based on emotional states, AURALIS provides empathetic, context-aware healthcare guidance that feels truly human.
+**AURALIS** is an avatar-based AI-powered virtual doctor that combines cutting-edge artificial intelligence, real-time emotion detection, and immersive 3D avatars to deliver personalized medical consultations. By analyzing facial expressions and adapting responses based on emotional states, AURALIS provides empathetic, context-aware healthcare guidance that feels truly human. View this project on the [website](https://stop-googling-symptoms.tech/) or on [Devpost](https://devpost.com/software/docai-evq74t)
+
 
 ---
 ## Demo Images
