@@ -1,59 +1,256 @@
 <div align="center">
-    <img src="frontend/public/apple-touch-icon.png" alt="Auralis Logo" width="100" height="100">
-    <h1>Auralis</h1>
-    <p>Your AI-powered virtual doctor</p>
+    <img src="frontend/public/apple-touch-icon.png" alt="AURALIS Logo" width="100" height="100">
+    <h1>AURALIS</h1>
+    <p><em>The FIRST EVER Personalized AI Doctor</em></p>
 </div>
 
 ---
 
-## Inspiration
+## 🌟 Overview
 
-We wanted to create a virtual doctor that can see your face, detect your emotions, and have a natural conversation about your health concerns. The goal was to make medical consultations more accessible while using facial recognition and emotion detection to provide personalized, empathetic responses.
-
----
-
-## What It Does
-
-Auralis is an AI-powered virtual doctor that conducts face-to-face video consultations:
-
-- **3D Avatar Doctor**: Interactive, lip-synced doctor avatar with customizable appearance
-- **Real-time Emotion Detection**: Analyzes facial expressions during consultation to understand patient emotional state
-- **Intelligent Conversations**: Powered by Google Gemini AI for natural, context-aware medical consultations
-- **Voice Interaction**: Natural speech-to-text and text-to-speech via ElevenLabs for seamless conversation
-- **Emotion-Aware Responses**: AI adapts its communication style based on detected emotions
-- **Session Insights**: Post-consultation summary with emotion timeline, key concerns, and recommendations
-- **Professional Report PDF Generation**: Generates a professional report PDF with the consultation summary, key concerns, and recommendations
+**AURALIS** is a revolutionary AI-powered virtual doctor that combines cutting-edge artificial intelligence, real-time emotion detection, and immersive 3D avatars to deliver personalized medical consultations. By analyzing facial expressions and adapting responses based on emotional states, AURALIS provides empathetic, context-aware healthcare guidance that feels truly human.
 
 ---
 
-## Tech Stack
+## 🎯 How AURALIS Works
 
-**Frontend:**
+### 1. **Landing & Setup**
+- Users are greeted with an elegant landing page featuring a dynamic liquid ether background
+- Customize your consultation experience by selecting avatar appearance, voice type, and background settings
 
-- Next.js 16
-- Three.js (3D avatar rendering)
-- face-api.js (real-time emotion detection)
-- Framer Motion (animations)
-- Tailwind CSS
+### 2. **Real-Time Video Consultation**
+- **3D Avatar Doctor**: Interact with a lifelike, lip-synced 3D doctor avatar powered by Three.js
+- **Webcam Integration**: Your webcam captures your facial expressions in real-time
+- **Emotion Detection**: Advanced face-api.js analyzes your emotions (happy, sad, anxious, neutral, etc.)
+- **Voice Conversation**: Speak naturally with the AI doctor using ElevenLabs speech-to-text and text-to-speech
+- **Intelligent Responses**: Google Gemini AI processes your concerns and adapts its tone based on detected emotions
+- **Live Transcript**: View the conversation in real-time with a scrolling chat display
 
-**Backend:**
+### 3. **Emotion-Aware AI**
+The backend continuously monitors:
+- **Facial Emotions**: Detected from your webcam feed
+- **Sentiment Analysis**: Extracted from your spoken words
+- **Emotion Mismatch Detection**: Identifies when your words don't match your facial expressions (e.g., saying "I'm fine" while looking distressed)
+- **Adaptive Communication**: The AI adjusts its empathy level, reassurance, and medical guidance based on your emotional state
 
-- FastAPI
-- Google Gemini
-- ElevenLabs (TTS/STT)
+### 4. **Post-Consultation Summary**
+- **Insights Dashboard**: Visual timeline of your emotions throughout the consultation
+- **Key Concerns**: AI-extracted summary of your main health issues
+- **Recommendations**: Personalized next steps and medical advice
+- **Professional PDF Report**: Download a formal medical report signed by "AURALIS AI System"
 
 ---
 
-## Quick Start
+## 🛠️ Tech Stack
 
-**Backend:**
+### **Frontend**
+| Technology | Purpose |
+|------------|---------|
+| **Next.js 16** | React framework for server-side rendering and routing |
+| **React 19** | UI component library |
+| **TypeScript** | Type-safe JavaScript |
+| **Tailwind CSS 4** | Utility-first CSS framework for styling |
+| **Three.js** | 3D avatar rendering and animations |
+| **Framer Motion** | Smooth animations and transitions |
+| **face-api.js** | Real-time facial emotion detection |
+| **jsPDF** | Professional PDF report generation |
+| **ReactBits** | Custom UI components (LiquidEther background) |
 
-```bash
-cd backend && pip install -r requirements.txt && uvicorn main:app --reload
+### **Backend**
+| Technology | Purpose |
+|------------|---------|
+| **FastAPI** | High-performance Python web framework |
+| **Uvicorn** | ASGI server for FastAPI |
+| **Google Gemini AI** | Large language model for medical consultations |
+| **ElevenLabs** | Text-to-speech (TTS) and speech-to-text (STT) |
+| **face-api.js** | Emotion detection from webcam feed |
+| **VADER Sentiment** | Sentiment analysis for emotion mismatch detection |
+| **Pydantic** | Data validation and settings management |
+| **python-dotenv** | Environment variable management |
+
+### **APIs & Services**
+- **Google Gemini API**: Powers the conversational AI doctor
+- **ElevenLabs API**: Provides natural voice synthesis and speech recognition
+- **WebRTC**: Real-time audio/video streaming
+
+---
+
+## 🚀 Getting Started
+
+### **Prerequisites**
+- **Node.js** (v18 or higher)
+- **Python** (v3.9 or higher)
+- **npm** or **yarn**
+- **pip** (Python package manager)
+
+### **Environment Variables**
+
+#### Backend (.env)
+Create a `.env` file in the `backend/` directory:
+```env
+GEMINI_API_KEY=your_google_gemini_api_key
+ELEVENLABS_API_KEY=your_elevenlabs_api_key
 ```
 
-**Frontend:**
-
-```bash
-cd frontend && npm install && npm run dev
+#### Frontend (.env.local)
+Create a `.env.local` file in the `frontend/` directory:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
+
+---
+
+## 📦 Installation & Setup
+
+### **Backend Setup**
+
+1. Navigate to the backend directory:
+```bash
+cd backend
+```
+
+2. Create a virtual environment (optional but recommended):
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+4. Run the backend server:
+```bash
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+The backend API will be available at `http://localhost:8000`
+
+---
+
+### **Frontend Setup**
+
+1. Navigate to the frontend directory:
+```bash
+cd frontend
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Run the development server:
+```bash
+npm run dev
+```
+
+The frontend will be available at `http://localhost:3000`
+
+---
+
+## 🎮 Usage
+
+1. **Start both servers** (backend on port 8000, frontend on port 3000)
+2. **Open your browser** and navigate to `http://localhost:3000`
+3. **Click "Get Started"** on the landing page
+4. **Customize your experience** (avatar, voice, background)
+5. **Allow webcam and microphone access** when prompted
+6. **Start your consultation** by speaking naturally to the AI doctor
+7. **End the call** when finished to view your summary and download the PDF report
+
+---
+
+## 📁 Project Structure
+
+```
+hackwestern/
+├── backend/
+│   ├── main.py                 # FastAPI application entry point
+│   ├── requirements.txt        # Python dependencies
+│   ├── routers/                # API route handlers
+│   │   ├── conversation.py     # Gemini AI conversation endpoint
+│   │   ├── tts.py              # ElevenLabs TTS/STT endpoints
+│   │   └── insights.py         # Emotion analysis endpoints
+│   ├── services/               # Business logic
+│   │   ├── gemini_service.py   # Gemini AI integration
+│   │   ├── elevenlabs_service.py # ElevenLabs integration
+│   │   └── emotion_analyzer.py # Emotion detection & analysis
+│   └── models/                 # Pydantic data models
+│
+├── frontend/
+│   ├── app/
+│   │   ├── page.tsx            # Main application entry
+│   │   ├── layout.tsx          # Root layout
+│   │   ├── globals.css         # Global styles
+│   │   ├── components/         # React components
+│   │   │   ├── LandingPage.tsx
+│   │   │   ├── SetupPage.tsx
+│   │   │   ├── CallInterface.tsx
+│   │   │   ├── Avatar.tsx      # 3D avatar component
+│   │   │   ├── VideoFeed.tsx   # Webcam + emotion detection
+│   │   │   ├── AudioController.tsx # Voice interaction
+│   │   │   ├── ChatDisplay.tsx
+│   │   │   ├── SummaryPage.tsx
+│   │   │   ├── InsightsDashboard.tsx
+│   │   │   └── LiquidEther.tsx # Animated background
+│   │   └── utils/
+│   │       └── pdfGenerator.ts # PDF report generation
+│   ├── package.json            # Node dependencies
+│   └── tailwind.config.ts      # Tailwind configuration
+│
+└── README.md
+```
+
+---
+
+## 🎨 Key Features
+
+### **Emotion Detection Pipeline**
+1. Webcam captures user's face at 30 FPS
+2. face-api.js detects facial landmarks and expressions
+3. Emotions are classified (happy, sad, angry, fearful, disgusted, surprised, neutral)
+4. Backend receives emotion data and analyzes patterns
+5. Gemini AI adjusts responses based on emotional context
+
+### **Voice Interaction Flow**
+1. User speaks → Browser captures audio
+2. Audio sent to ElevenLabs STT → Transcribed to text
+3. Text + emotion data sent to Gemini AI
+4. Gemini generates empathetic response
+5. Response sent to ElevenLabs TTS → Audio generated
+6. Avatar lip-syncs to audio playback
+
+### **Adaptive AI Behavior**
+- **High Anxiety Detected**: More reassuring, slower-paced responses
+- **Sadness Detected**: Increased empathy and validation
+- **Emotion Mismatch**: AI probes deeper ("You say you're fine, but you seem worried...")
+- **Neutral/Happy**: Standard medical consultation tone
+
+---
+
+## 🔒 Privacy & Disclaimers
+
+- All webcam and audio data is processed in real-time and **not stored**
+- Conversations are **not saved** after the session ends
+- AURALIS is an **AI assistant** and does not replace professional medical advice
+- Always consult a licensed healthcare provider for serious medical concerns
+
+---
+
+## 👥 Team
+
+Built with ❤️ at Hack Western
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+<div align="center">
+    <p><strong>AURALIS</strong> - Kickstarting the Future of Healthcare</p>
+</div>
