@@ -22,7 +22,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",  # Local development
         "https://*.pages.dev",  # Cloudflare Pages preview deployments
-        "https://stop-googling-symptoms.tech",  # Your custom domain (when you set it up for frontend)
+        "https://auralis-production-2c25.up.railway.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
