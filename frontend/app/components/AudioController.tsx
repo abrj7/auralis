@@ -153,7 +153,7 @@ export default function AudioController({
       const formData = new FormData();
       formData.append("audio", audioBlob, "recording.webm");
 
-      const response = await fetch("http://localhost:8000/api/stt", {
+      const response = await fetch(`${API_BASE_URL}/api/stt`, {
         method: "POST",
         body: formData,
       });
