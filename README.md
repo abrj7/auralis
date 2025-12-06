@@ -51,33 +51,6 @@ The backend continuously monitors:
 
 ---
 
-## Tech Stack
-
-### **Frontend**
-| Technology | Purpose |
-|------------|---------|
-| **Next.js 16** | React framework for server-side rendering and routing |
-| **React 19** | UI component library |
-| **TypeScript** | Type-safe JavaScript |
-| **Tailwind CSS 4** | Utility-first CSS framework for styling |
-| **Three.js** | 3D avatar rendering and animations |
-| **Framer Motion** | Smooth animations and transitions |
-| **face-api.js** | Real-time facial emotion detection |
-| **jsPDF** | Professional PDF report generation |
-| **ReactBits** | Custom UI components (LiquidEther background) |
-
-### **Backend**
-| Technology | Purpose |
-|------------|---------|
-| **FastAPI** | High-performance Python web framework |
-| **Uvicorn** | ASGI server for FastAPI |
-| **Google Gemini AI** | Large language model for medical consultations |
-| **ElevenLabs** | Text-to-speech (TTS) and speech-to-text (STT) |
-| **face-api.js** | Emotion detection from webcam feed |
-| **VADER Sentiment** | Sentiment analysis for emotion mismatch detection |
-| **Pydantic** | Data validation and settings management |
-| **python-dotenv** | Environment variable management |
-
 ### **APIs & Services**
 - **Google Gemini API**: Powers the conversational AI doctor
 - **ElevenLabs API**: Provides natural voice synthesis and speech recognition
@@ -249,9 +222,37 @@ hackwestern/
 
 ---
 
+## Tech Stack
+
+### **Frontend**
+| Technology | Purpose |
+|------------|---------|
+| **Next.js 16** | React framework for server-side rendering and routing |
+| **React 19** | UI component library |
+| **TypeScript** | Type-safe JavaScript |
+| **Tailwind CSS 4** | Utility-first CSS framework for styling |
+| **Three.js** | 3D avatar rendering and animations |
+| **Framer Motion** | Smooth animations and transitions |
+| **face-api.js** | Real-time facial emotion detection |
+| **jsPDF** | Professional PDF report generation |
+| **ReactBits** | Custom UI components (LiquidEther background) |
+
+### **Backend**
+| Technology | Purpose |
+|------------|---------|
+| **FastAPI** | High-performance Python web framework |
+| **Uvicorn** | ASGI server for FastAPI |
+| **Google Gemini AI** | Large language model for medical consultations |
+| **ElevenLabs** | Text-to-speech (TTS) and speech-to-text (STT) |
+| **face-api.js** | Emotion detection from webcam feed |
+| **VADER Sentiment** | Sentiment analysis for emotion mismatch detection |
+| **Pydantic** | Data validation and settings management |
+| **python-dotenv** | Environment variable management |
+
+---
 ## Team
 
-Built with ❤️ at Hack Western by 
+Built at Hack Western
 
 ---
 
