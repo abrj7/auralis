@@ -219,7 +219,6 @@ hackwestern/
 - Conversations are **not saved** after the session ends
 - AURALIS is an **AI assistant** and does not replace professional medical advice
 - Always consult a licensed healthcare provider for serious medical concerns
-
 ---
 
 ## Tech Stack
@@ -249,13 +248,3 @@ hackwestern/
 | **Pydantic** | Data validation and settings management |
 | **python-dotenv** | Environment variable management |
 
----
-## Team
-
-Built at Hack Western
-
----
-
-<div align="center">
-    <p><strong>AURALIS</strong> - Kickstarting the Future of Healthcare</p>
-</div>
