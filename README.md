@@ -197,24 +197,14 @@ hackwestern/
 4. Backend receives emotion data and analyzes patterns
 5. Gemini AI adjusts responses based on emotional context
 
-### **Voice Interaction Flow**
-1. User speaks → Browser captures audio
-2. Audio sent to ElevenLabs STT → Transcribed to text
-3. Text + emotion data sent to Gemini AI
-4. Gemini generates empathetic response
-5. Response sent to ElevenLabs TTS → Audio generated
-6. Avatar lip-syncs to audio playback
-
 ### **Adaptive AI Behavior**
 - **High Anxiety Detected**: More reassuring, slower-paced responses
 - **Sadness Detected**: Increased empathy and validation
 - **Emotion Mismatch**: AI probes deeper ("You say you're fine, but you seem worried...")
 - **Neutral/Happy**: Standard medical consultation tone
-
 ---
 
 ## Privacy & Disclaimers
-
 - All webcam and audio data is processed in real-time and **not stored**
 - Conversations are **not saved** after the session ends
 - AURALIS is an **AI assistant** and does not replace professional medical advice
