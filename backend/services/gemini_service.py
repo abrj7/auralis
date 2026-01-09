@@ -1,5 +1,5 @@
 """
-Gemini AI service - handles Google Gemini API interactions
+handles Google Gemini API interactions
 """
 import os
 from typing import Dict, List, Optional
